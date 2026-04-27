@@ -10,7 +10,6 @@ package com.shayarishaala.shayarishaala.Model.Routing
      object shayariAndQuotes : ShayariRoutingItems("shayariAndQuote")
      object quoteListItem : ShayariRoutingItems("quote_list")
      object trendingShayariListScreen : ShayariRoutingItems("trending")
-     object kalamScreen : ShayariRoutingItems("kalam_screen")
 
 
  }

@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -95,7 +94,6 @@ fun ShayariAndQuotes(navHostController: NavHostController?) {
                         fontSize = 26.sp,
                         modifier = Modifier.padding(start = 15.dp)
                     )
-
                 }
                 Row(
                     modifier = Modifier
@@ -180,11 +178,6 @@ fun ShayariAndQuotes(navHostController: NavHostController?) {
                 }
                 Spacer(modifier = Modifier.height(25.dp))
                 TrendingShayariCard(navHostController)
-                // kalam card
-//                Spacer(modifier = Modifier.height(20.dp))
-
-
-
             }
         }
     }

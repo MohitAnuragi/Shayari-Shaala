@@ -130,7 +130,7 @@ fun TrendingShayariListScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = " कोई शायरी उपलब्ध नहीं है",
+                            text = "❌ कोई शायरी उपलब्ध नहीं है",
                             color = Color.White,
                             fontSize = 18.sp,
                             fontFamily = FontFamily.Serif

@@ -165,7 +165,7 @@ fun FinalShayriView(finalShayari: String) {
                                 }
                             }
 
-                            //  Big Heart Animation (overlay)
+                            // ❤️ Big Heart Animation (overlay)
                             if (showHeart) {
                                 Icon(
                                     imageVector = Icons.Filled.Favorite,
@@ -213,7 +213,7 @@ fun FinalShayriView(finalShayari: String) {
                             .clickable {
                                 clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(finalShayari))
                                 copied = true
-                               // Toast.makeText(context, "Text Copied Successfully ✅", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Text Copied Successfully ✅", Toast.LENGTH_SHORT).show()
 
                                 // Reset copied state after 1.5 seconds
                                 Handler(Looper.getMainLooper()).postDelayed({
