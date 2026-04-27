@@ -12,10 +12,12 @@ android {
         applicationId = "com.shayarishaala.shayarishaala"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 3
+        versionName = "3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "GEMINI_API_KEY", "\"AIzaSyBxE8FMrYuwJddsS8FAOnVa151wHBbpl_I\"")
     }
 
     buildTypes {
@@ -27,15 +29,16 @@ android {
             )
         }
     }
+    buildFeatures {
+        buildConfig = true
+        compose = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
         jvmTarget = "11"
-    }
-    buildFeatures {
-        compose = true
     }
 }
 
@@ -58,4 +61,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
+
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+
+
 }

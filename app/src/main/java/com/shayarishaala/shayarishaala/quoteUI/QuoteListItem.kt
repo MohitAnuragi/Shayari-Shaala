@@ -123,9 +123,3 @@ fun QuoteListItem(navHostController: NavHostController? = null, value: String?) 
         }
     }
 }
-
-//@Composable
-//@Preview
-//fun PreviewI() {
-//    ShayariListItem(title = "Love")
-//}
