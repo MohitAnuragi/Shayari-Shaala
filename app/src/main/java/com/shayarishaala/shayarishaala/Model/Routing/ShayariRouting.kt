@@ -11,11 +11,11 @@ import com.shayarishaala.shayarishaala.commonUI.FinalShayriView
 import com.shayarishaala.shayarishaala.commonUI.FloatingBottomButton
 import com.shayarishaala.shayarishaala.commonUI.ShayariAndQuotes
 import com.shayarishaala.shayarishaala.commonUI.SplashScreen
+import com.shayarishaala.shayarishaala.favorites.FavoritesScreen
 import com.shayarishaala.shayarishaala.quoteUI.QuoteListItem
 import com.shayarishaala.shayarishaala.quoteUI.QuoteScreen
 import com.shayarishaala.shayarishaala.shayariUI.Catagory
 import com.shayarishaala.shayarishaala.shayariUI.ShayariListItem
-import com.shayarishaala.shayarishaala.trending.TrendingShayariListScreen
 import com.shayarishaala.shayarishaala.ui.kalam.KalamScreen
 
 @Composable
@@ -32,6 +32,8 @@ fun ShayariRouting(navHostController: NavHostController) {
         currentRoute.contains(ShayariRoutingItems.finalShayriScreen.route) -> false
         // Hide when already on the Kalam (creation) screen
         currentRoute == ShayariRoutingItems.kalamScreen.route -> false
+        // Hide on Favorites screen
+        currentRoute == ShayariRoutingItems.favoritesScreen.route -> false
         else -> true
     }
 
@@ -70,11 +72,11 @@ fun ShayariRouting(navHostController: NavHostController) {
                 val value = it.arguments?.getString("item").toString()
                 FinalShayriView(value)
             }
-            composable(ShayariRoutingItems.trendingShayariListScreen.route) {
-                TrendingShayariListScreen(navHostController)
-            }
             composable(ShayariRoutingItems.kalamScreen.route) {
                 KalamScreen(navHostController = navHostController)
+            }
+            composable(ShayariRoutingItems.favoritesScreen.route) {
+                FavoritesScreen(navHostController)
             }
         }
     }

@@ -35,6 +35,7 @@ import com.shayarishaala.shayarishaala.data.getList
 import com.shayarishaala.shayarishaala.ui.theme.Pink80
 
 import com.shayarishaala.shayarishaala.ui.theme.Purple40
+import com.shayarishaala.shayarishaala.ui.theme.PurpleGrey40
 
 @Composable
 fun Catagory(navHostController: NavHostController) {
@@ -89,7 +90,7 @@ fun Catagory(navHostController: NavHostController) {
                                 .clickable {
                                     navHostController.navigate(ShayariRoutingItems.shayriListScreen.route + "/${item.title.toString()}")
                                 },
-                            colors = CardDefaults.cardColors(containerColor = Pink80),
+                            colors = CardDefaults.cardColors(Color.Black),
                             border = BorderStroke(width = 1.dp, color = Color.White)
                         ) {
                             Box(

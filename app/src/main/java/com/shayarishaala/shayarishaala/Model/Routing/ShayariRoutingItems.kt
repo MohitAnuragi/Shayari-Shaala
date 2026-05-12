@@ -9,8 +9,7 @@ package com.shayarishaala.shayarishaala.Model.Routing
      object  finalShayriScreen : ShayariRoutingItems("final_shayari")
      object shayariAndQuotes : ShayariRoutingItems("shayariAndQuote")
      object quoteListItem : ShayariRoutingItems("quote_list")
-     object trendingShayariListScreen : ShayariRoutingItems("trending")
      object kalamScreen : ShayariRoutingItems("kalam_screen")
-
+     object favoritesScreen : ShayariRoutingItems("favorites")
 
  }

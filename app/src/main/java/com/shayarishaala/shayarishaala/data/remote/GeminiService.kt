@@ -12,7 +12,7 @@ class GeminiService(apiKey: String) {
         generationConfig = generationConfig {
             temperature = 0.7f
             topP = 0.95f
-            maxOutputTokens = 6024
+            maxOutputTokens = 5056
         }
     )
 

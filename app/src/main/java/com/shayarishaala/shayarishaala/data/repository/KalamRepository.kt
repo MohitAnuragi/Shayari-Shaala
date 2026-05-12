@@ -13,12 +13,9 @@ class KalamRepository(private val geminiService: GeminiService) {
 
     suspend fun generateShayari(prompt: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "Repository: Calling geminiService.generateShayari")
             val shayari = geminiService.generateShayari(prompt)
-            Log.d(TAG, "Repository: Success - received shayari")
             Result.success(shayari)
         } catch (e: Exception) {
-            Log.e(TAG, "Repository: Error - ${e.message}", e)
             Result.failure(e)
         }
     }

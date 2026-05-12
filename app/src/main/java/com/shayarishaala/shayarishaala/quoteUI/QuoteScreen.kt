@@ -93,7 +93,7 @@ fun QuoteScreen(navHostController: NavHostController) {
                                 .clickable {
                                     navHostController.navigate(ShayariRoutingItems.quoteListItem.route + "/${item.value.toString()}")
                                 },
-                            colors = CardDefaults.cardColors(containerColor = Pink80),
+                            colors = CardDefaults.cardColors(Color.Black),
                             border = BorderStroke(width = 1.dp, color = Color.White)
 
                         ) {
