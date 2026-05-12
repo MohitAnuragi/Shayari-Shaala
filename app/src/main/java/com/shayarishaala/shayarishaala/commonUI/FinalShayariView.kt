@@ -1,9 +1,9 @@
 package com.shayarishaala.shayarishaala.commonUI
 
+import android.R.attr.category
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -22,13 +22,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.CopyAll
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -47,35 +44,42 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.shayarishaala.shayarishaala.favorites.FavoriteViewModel
 import com.shayarishaala.shayarishaala.ui.theme.Pink80
+import com.shayarishaala.shayarishaala.ui.theme.Purple40
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 @Composable
 fun FinalShayriView(finalShayari: String) {
     Surface {
         val context = LocalContext.current
         val clipboardManager: ClipboardManager = LocalClipboardManager.current
-        var liked by remember { mutableStateOf(false) }
         var copied by remember { mutableStateOf(false) }
-        var likeCount by remember { mutableStateOf(Random.nextInt(0, 200)) }
 
-        // For heart animation
+
+        val favoriteViewModel: FavoriteViewModel = viewModel()
+        val isFavorite by favoriteViewModel.isFavorite(finalShayari)
+            .collectAsStateWithLifecycle(initialValue = false)
+
+        // For star burst animation
         val scope = rememberCoroutineScope()
-        val heartScale = remember { Animatable(0f) }
-        var showHeart by remember { mutableStateOf(false) }
+        val starScale = remember { Animatable(0f) }
+        var showStarBurst by remember { mutableStateOf(false) }
+
+
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = Pink80)
+                .background(color = Purple40)
                 .padding(top = 35.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -97,67 +101,67 @@ fun FinalShayriView(finalShayari: String) {
                             text = finalShayari,
                             color = Color.White,
                             textAlign = TextAlign.Center,
-                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Medium, fontFamily = FontFamily.Serif)
                         )
                     }
                 }
 
-                // Buttons Row
+                // Action Buttons Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+
+                    // ⭐ Favorite Button (Room-backed)
                     Box(
                         modifier = Modifier
                             .padding(10.dp)
                             .size(150.dp, 82.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Like button card
                         Box(
                             modifier = Modifier
                                 .padding(6.dp)
-                                .size(100.dp, 46.dp),
+                                .size(110.dp, 46.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Card(
                                 modifier = Modifier
                                     .matchParentSize()
                                     .clickable {
-                                        liked = !liked
-                                        if (liked) {
-                                            likeCount += 1
-                                            showHeart = true
+                                        favoriteViewModel.toggleFavorite(finalShayari)
+                                        if (!isFavorite) {
+                                            // animate only when saving
+                                            showStarBurst = true
                                             scope.launch {
-                                                heartScale.snapTo(0f)
-                                                heartScale.animateTo(1.5f, tween(300))
-                                                heartScale.animateTo(0f, tween(300))
-                                                showHeart = false
+                                                starScale.snapTo(0f)
+                                                starScale.animateTo(1.5f, tween(300))
+                                                starScale.animateTo(0f, tween(300))
+                                                showStarBurst = false
                                             }
-                                        } else {
-                                            if (likeCount > 0) likeCount -= 1
                                         }
                                     },
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isFavorite) Color(0xFFE5D383) else Color.White
+                                ),
                                 shape = RoundedCornerShape(100.dp),
                                 border = BorderStroke(1.dp, Color.LightGray)
                             ) {
-                                // Center the icon and count vertically
                                 Row(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Icon(
-                                        imageVector = if (liked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                        contentDescription = "Like",
-                                        tint = Color.Red,
-                                        modifier = Modifier.size(30.dp)
+                                        imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                                        contentDescription = "Favorite",
+                                        tint = if (isFavorite) Color(0xFFFFB300) else Color.Black,
+                                        modifier = Modifier.size(28.dp)
                                     )
                                     Spacer(modifier = Modifier.width(5.dp))
                                     Text(
-                                        text = "$likeCount",
+                                        text = if (isFavorite) "Saved" else "Save",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.Black,
@@ -165,21 +169,19 @@ fun FinalShayriView(finalShayari: String) {
                                 }
                             }
 
-                            //  Big Heart Animation (overlay)
-                            if (showHeart) {
+                            // Star Burst Animation (overlay)
+                            if (showStarBurst) {
                                 Icon(
-                                    imageVector = Icons.Filled.Favorite,
+                                    imageVector = Icons.Filled.Star,
                                     contentDescription = null,
-                                    tint = Color.Red.copy(alpha = 0.4f),
+                                    tint = Color(0xFFFFD700).copy(alpha = 0.5f),
                                     modifier = Modifier
                                         .size(500.dp)
-                                        .scale(heartScale.value)
+                                        .scale(starScale.value)
                                 )
                             }
                         }
                     }
-
-
 
                     // 🔗 Share Button
                     Card(
@@ -189,23 +191,22 @@ fun FinalShayriView(finalShayari: String) {
                             .clickable {
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, finalShayari)
+                                    putExtra(
+                                        Intent.EXTRA_TEXT,
+                                        "❤️ Shayari:\n\n$finalShayari\n\n📱 Shayari Shaala App:\nhttps://play.google.com/store/apps/details?id=com.shayarishaala.shayarishaala"
+                                    )
                                 }
                                 context.startActivity(Intent.createChooser(shareIntent, null))
                             },
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         shape = RoundedCornerShape(100.dp)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Icon(imageVector = Icons.Default.Share, contentDescription = "share")
                         }
                     }
 
                     // 📋 Copy Button
-
                     Card(
                         modifier = Modifier
                             .padding(10.dp)
@@ -213,9 +214,6 @@ fun FinalShayriView(finalShayari: String) {
                             .clickable {
                                 clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(finalShayari))
                                 copied = true
-                               // Toast.makeText(context, "Text Copied Successfully ✅", Toast.LENGTH_SHORT).show()
-
-                                // Reset copied state after 1.5 seconds
                                 Handler(Looper.getMainLooper()).postDelayed({
                                     copied = false
                                 }, 1500)
@@ -225,15 +223,12 @@ fun FinalShayriView(finalShayari: String) {
                         ),
                         shape = RoundedCornerShape(100.dp)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             if (copied) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Copied",
-                                    tint = Color(0xFF00C853), // Green check color
+                                    tint = Color(0xFF16E069),
                                     modifier = Modifier.size(28.dp)
                                 )
                             } else {

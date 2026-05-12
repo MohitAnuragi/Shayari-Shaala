@@ -1,5 +1,6 @@
 package com.shayarishaala.shayarishaala.commonUI
 
+import android.os.Build.VERSION.SDK_INT
 import android.os.Handler
 import android.os.Looper
 import android.view.animation.OvershootInterpolator
@@ -19,11 +20,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.Coil.imageLoader
+import coil.ImageLoader
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import com.shayarishaala.shayarishaala.Model.Routing.ShayariRoutingItems
 import com.shayarishaala.shayarishaala.R
 import com.shayarishaala.shayarishaala.ui.theme.Purple40
@@ -34,6 +42,7 @@ fun SplashScreen(navHostController: NavHostController) {
 
     // Animation states
     var startAnimation by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     // Scale animation for logo
     val scale = animateFloatAsState(
@@ -49,6 +58,16 @@ fun SplashScreen(navHostController: NavHostController) {
         targetValue = if (startAnimation) 1f else 0f,
         animationSpec = tween(durationMillis = 1500)
     )
+    // for gif loading
+    val imageLoader = ImageLoader.Builder(context)
+        .components {
+            if (SDK_INT >= 28) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }
+        .build()
 
     // Start animations and navigate after delay
     LaunchedEffect(Unit) {
@@ -96,10 +115,16 @@ fun SplashScreen(navHostController: NavHostController) {
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
 
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(40.dp),
-                        strokeWidth = 4.dp,
-                        color = Purple80
+                    val painter = rememberAsyncImagePainter(
+                        model = ImageRequest.Builder(context)
+                            .data(R.drawable.progress)
+                            .build(),
+                        imageLoader = imageLoader
+                    )
+                    Image(
+                        painter = painter,
+                        contentDescription = "Create Shayari",
+                        modifier = Modifier.size(56.dp)
                     )
                 }
             }
