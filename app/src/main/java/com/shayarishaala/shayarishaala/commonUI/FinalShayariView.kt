@@ -1,7 +1,7 @@
 package com.shayarishaala.shayarishaala.commonUI
 
-import android.R.attr.category
 import android.content.Intent
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.animation.core.Animatable
@@ -16,11 +16,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
@@ -52,13 +54,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.shayarishaala.shayarishaala.Model.Routing.ShayariRoutingItems
 import com.shayarishaala.shayarishaala.favorites.FavoriteViewModel
-import com.shayarishaala.shayarishaala.ui.theme.Pink80
 import com.shayarishaala.shayarishaala.ui.theme.Purple40
 import kotlinx.coroutines.launch
 
 @Composable
-fun FinalShayriView(finalShayari: String) {
+fun FinalShayriView(
+    finalShayari: String,
+    navHostController: NavHostController? = null
+) {
     Surface {
         val context = LocalContext.current
         val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -242,6 +248,50 @@ fun FinalShayriView(finalShayari: String) {
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // ── Open Studio — full-width primary button (same entry point as KalamScreen) ──
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(52.dp)
+                        .clickable {
+                            navHostController?.let { nav ->
+                                val encoded = Uri.encode(finalShayari)
+                                nav.navigate(ShayariRoutingItems.studioScreen.route + "/$encoded")
+                            }
+                        },
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(100.dp),
+                    border = BorderStroke(1.5.dp, Color.Black)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.AutoAwesome,
+                                contentDescription = "Open Studio",
+                                tint = Color.Black,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Text(
+                                text = "Open in Studio",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

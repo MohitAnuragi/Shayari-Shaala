@@ -226,7 +226,7 @@ fun KalamScreenContent(
                     }
 
                     Text(
-                        text = "Kalam Assistant ✨",
+                        text = "KALAM ASSISTANT",
                         fontWeight = FontWeight.ExtraBold,
                         fontFamily = FontFamily.Serif,
                         fontSize = 28.sp,

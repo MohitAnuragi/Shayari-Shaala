@@ -11,5 +11,6 @@ package com.shayarishaala.shayarishaala.Model.Routing
      object quoteListItem : ShayariRoutingItems("quote_list")
      object kalamScreen : ShayariRoutingItems("kalam_screen")
      object favoritesScreen : ShayariRoutingItems("favorites")
+     object studioScreen : ShayariRoutingItems("shayari_studio")
 
  }

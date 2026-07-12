@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- For sharing generated shayari images via FileProvider -->
+    <cache-path name="shared_images" path="images/" />
+    <!-- For app-specific external storage (API < 29 download fallback) -->
+    <external-files-path name="external_images" path="Pictures/" />
+</paths>
