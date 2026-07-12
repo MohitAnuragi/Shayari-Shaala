@@ -1,6 +1,7 @@
 package com.shayarishaala.shayarishaala.ui.kalam
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.widget.Toast
 import androidx.compose.animation.core.Animatable
@@ -24,6 +25,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
@@ -68,6 +70,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
+import com.shayarishaala.shayarishaala.Model.Routing.ShayariRoutingItems
 import com.shayarishaala.shayarishaala.BuildConfig
 import com.shayarishaala.shayarishaala.R
 import com.shayarishaala.shayarishaala.data.remote.GeminiService
@@ -123,7 +126,7 @@ fun KalamScreen(navHostController: NavHostController) {
             clipboardManager.setText(AnnotatedString(state.shayari))
         },
         onShareClick = {
-            val shareText = "❤️ Shayari:\n\n${state.shayari}\n\n📱 Shayari Shaala App:\nhttps://play.google.com/store/apps/details?id=com.shayarishaala.shayarishaala"
+            val shareText = "️Shayari:\n\n${state.shayari}\n\n📱 Shayari Shaala App:\nhttps://play.google.com/store/apps/details?id=com.shayarishaala.shayarishaala"
             val shareIntent = Intent().apply {
                 action = Intent.ACTION_SEND
                 putExtra(Intent.EXTRA_TEXT, shareText)
@@ -145,7 +148,11 @@ fun KalamScreen(navHostController: NavHostController) {
             }
         },
         onBackClick = { navHostController.popBackStack() },
-        onClearError = { viewModel.clearError() }
+        onClearError = { viewModel.clearError() },
+        onOpenStudio = {
+            val encoded = Uri.encode(state.shayari)
+            navHostController.navigate(ShayariRoutingItems.studioScreen.route + "/$encoded")
+        }
     )
 }
 
@@ -160,7 +167,8 @@ fun KalamScreenContent(
     onShareClick: () -> Unit,
     onFavoriteToggle: () -> Unit,
     onBackClick: () -> Unit,
-    onClearError: () -> Unit
+    onClearError: () -> Unit,
+    onOpenStudio: () -> Unit
 ) {
     var copied by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -256,7 +264,7 @@ fun KalamScreenContent(
                     ) {
                         BasicTextField(
                             value = state.userPrompt,
-                            onValueChange = { onPromptChanged(it) },
+                            onValueChange = { if (!state.isLoading) onPromptChanged(it) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(14.dp),
@@ -391,7 +399,44 @@ fun KalamScreenContent(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Action Buttons
+                    // ── Full-width primary "Open Studio" button ──────────────
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .padding(horizontal = 20.dp)
+                            .clickable { onOpenStudio() },
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color.Black)
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = "Open Studio",
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Text(
+                                    text = "Open in Studio",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // ── Secondary actions row: Copy · Share · Like · Regen ───
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -410,7 +455,7 @@ fun KalamScreenContent(
                                     delay(2000)
                                     copied = false
                                 }
-                                      },
+                            },
                             modifier = Modifier.weight(1f)
                         )
 
@@ -426,10 +471,7 @@ fun KalamScreenContent(
                         ActionButton(
                             icon = if (isFavorite) Icons.Default.Star else Icons.Outlined.StarOutline,
                             label = "Like",
-                            onClick = {
-                                onFavoriteToggle()
-
-                                      },
+                            onClick = { onFavoriteToggle() },
                             modifier = Modifier.weight(1f)
                         )
 
