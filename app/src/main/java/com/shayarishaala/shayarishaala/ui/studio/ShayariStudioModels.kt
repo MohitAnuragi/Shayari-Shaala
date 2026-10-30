@@ -6,6 +6,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.shayarishaala.shayarishaala.ui.theme.HindFamily
+import com.shayarishaala.shayarishaala.ui.theme.KalamFamily
 
 // ─────────────────────────────────────────────
 //  Background — 30 gradient presets
@@ -138,7 +140,7 @@ enum class ShayariBackground(
 }
 
 // ─────────────────────────────────────────────
-//  Font — wraps system FontFamily
+//  Font — system families plus the app's bundled Kalam and Hind
 // ─────────────────────────────────────────────
 enum class ShayariFont(
     val displayName: String,
@@ -152,7 +154,9 @@ enum class ShayariFont(
     CURSIVE("Cursive Flow", "💫", FontFamily.Cursive),
     MONOSPACE("Typewriter", "⌨️", FontFamily.Monospace),
     DEFAULT("Classic", "🖊️", FontFamily.Default),
-    DEFAULT_BOLD("Bold Classic", "🔲", FontFamily.Default, FontWeight.Bold)
+    DEFAULT_BOLD("Bold Classic", "🔲", FontFamily.Default, FontWeight.Bold),
+    KALAM("Kalam Haath", "🪶", KalamFamily),
+    HIND("Hind", "🔤", HindFamily, FontWeight.Medium)
 }
 
 // ─────────────────────────────────────────────

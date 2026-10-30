@@ -1,310 +1,148 @@
 package com.shayarishaala.shayarishaala.favorites
 
-import android.content.Intent
-import android.os.Handler
-import android.os.Looper
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.shayarishaala.shayarishaala.Model.Routing.ShayariRoutingItems
-import kotlin.collections.isNotEmpty
+import com.shayarishaala.shayarishaala.ui.components.ActionStyle
+import com.shayarishaala.shayarishaala.ui.components.BottomBarSpace
+import com.shayarishaala.shayarishaala.ui.components.CopyButton
+import com.shayarishaala.shayarishaala.ui.components.CountBadge
+import com.shayarishaala.shayarishaala.ui.components.EmptyNotebook
+import com.shayarishaala.shayarishaala.ui.components.HeartButton
+import com.shayarishaala.shayarishaala.ui.components.KaagazTopBar
+import com.shayarishaala.shayarishaala.ui.components.MoodChip
+import com.shayarishaala.shayarishaala.ui.components.NotebookCard
+import com.shayarishaala.shayarishaala.ui.components.ShareButton
+import com.shayarishaala.shayarishaala.ui.components.SharedKeys
+import com.shayarishaala.shayarishaala.ui.components.categoryDisplay
+import com.shayarishaala.shayarishaala.ui.components.pressClick
+import com.shayarishaala.shayarishaala.ui.components.rememberEnterOnceState
+import com.shayarishaala.shayarishaala.ui.components.sharedShayari
+import com.shayarishaala.shayarishaala.ui.components.staggeredEnter
+import com.shayarishaala.shayarishaala.ui.theme.Motion
+import com.shayarishaala.shayarishaala.ui.theme.Paper
+import com.shayarishaala.shayarishaala.ui.theme.ShayariTextStyle
+import com.shayarishaala.shayarishaala.ui.theme.moodColor
+import com.shayarishaala.shayarishaala.utils.ShareUtils
 
 @Composable
 fun FavoritesScreen(navHostController: NavHostController?) {
+    val context = LocalContext.current
     val favoriteViewModel: FavoriteViewModel = viewModel()
     val favorites by favoriteViewModel.favoriteList.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    val enterState = rememberEnterOnceState()
 
-    val gradientBg = Brush.verticalGradient(
-        colors = listOf(Color(0xFFA597DC), Color(0xFF82799F), Color(0xFF9B90C7))
-    )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Paper)
+    ) {
+        KaagazTopBar(
+            title = "संभाली हुई शायरी",
+            subtitle = "Saved · newest first",
+            onBack = dropUnlessResumed { navHostController?.popBackStack() },
+            actions = { if (favorites.isNotEmpty()) CountBadge(favorites.size) }
+        )
 
-    Surface {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(brush = gradientBg)
-                .padding(top = 35.dp)
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp)
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Back Button
-                    Card(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clickable { navHostController?.popBackStack() },
-                        colors = CardDefaults.cardColors(Color.White),
-                        shape = RoundedCornerShape(100.dp)
-                    ) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-//                                tint = Color.White
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Text(
-                        text = "Your Favorites",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 26.sp,
-                        color = Color.Black
+        Crossfade(
+            targetState = favorites.isEmpty(),
+            animationSpec = tween(Motion.MEDIUM),
+            label = "favoritesEmpty"
+        ) { isEmpty ->
+            if (isEmpty) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    EmptyNotebook(
+                        icon = Icons.Outlined.FavoriteBorder,
+                        title = "अभी कोई पन्ना नहीं",
+                        message = "Tap ♥ on any shayari to save it here"
                     )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // Count badge
-                    if (favorites.isNotEmpty()) {
-                        Card(
-                            colors = CardDefaults.cardColors(Color(0xFFE3CE61)),
-                            shape = RoundedCornerShape(100.dp)
-                        ) {
-                            Text(
-                                text = "${favorites.size}",
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = Color(0xFF1A0033)
-                            )
-                        }
-                    }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // ── Content ────────────────────────────────────────────────
-                if (favorites.isEmpty()) {
-                    // Empty State
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = 80.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = Icons.Default.FavoriteBorder,
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.4f),
-                                modifier = Modifier.size(80.dp)
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    itemsIndexed(favorites, key = { _, item -> item.id }) { index, fav ->
+                        val display = categoryDisplay(fav.category)
+                        NotebookCard(
+                            tilt = if (index % 2 == 0) -0.5f else 0.5f,
+                            lineSpacing = 36.sp,
+                            firstRuleOffset = 96.dp,
+                            modifier = Modifier
+                                .animateItem()
+                                .staggeredEnter(index, enterState, key = fav.id)
+                                .sharedShayari(SharedKeys.single(fav.text))
+                                .pressClick(pressedScale = 0.98f, onClickLabel = "Read") {
+                                    navHostController?.navigate(ShayariRoutingItems.finalShayriScreen.withArg(fav.text))
+                                }
+                        ) {
+                            MoodChip(
+                                text = listOf(display.emoji, display.hindi ?: display.name)
+                                    .filter { it.isNotEmpty() }
+                                    .joinToString(" "),
+                                color = moodColor(fav.category.hashCode())
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(Modifier.height(16.dp))
                             Text(
-                                text = "No favorites yet ❤️",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White.copy(alpha = 0.7f),
-                                fontFamily = FontFamily.Serif
+                                text = fav.text,
+                                style = ShayariTextStyle.copy(fontSize = 20.sp, lineHeight = 36.sp)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Tap ⭐ on any shayari to save it here",
-                                fontSize = 14.sp,
-                                color = Color.White.copy(alpha = 0.45f),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 32.dp)
-                            )
-                        }
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            start = 14.dp,
-                            end = 14.dp,
-                            top = 4.dp,
-                            bottom = 100.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        itemsIndexed(favorites, key = { _, item -> item.id }) { index, fav ->
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = fadeIn() + slideInVertically { it / 2 },
-                                exit = fadeOut()
+                            Spacer(Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                FavoriteCard(
-                                    navHostController = navHostController,
-                                    text = fav.text,
-                                    category = fav.category,
-                                    onRemove = { favoriteViewModel.removeFavorite(fav.text) },
-                                    onCopy = {
-                                        clipboardManager.setText(AnnotatedString(fav.text))
-                                    },
-                                    onShare = {
-                                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "text/plain"
-                                            putExtra(
-                                                Intent.EXTRA_TEXT,
-                                                "❤️ Shayari:\n\n${fav.text}\n\n📱 Shayari Shaala App:\nhttps://play.google.com/store/apps/details?id=com.shayarishaala.shayarishaala"
-                                            )
-                                        }
-                                        context.startActivity(
-                                            Intent.createChooser(shareIntent, null)
-                                        )
-                                    }
+                                CopyButton(text = fav.text, style = ActionStyle.Paper)
+                                ShareButton(
+                                    onClick = { ShareUtils.shareText(context, fav.text) },
+                                    style = ActionStyle.Paper
+                                )
+                                Spacer(Modifier.weight(1f))
+                                HeartButton(
+                                    isFavorite = true,
+                                    onToggle = { favoriteViewModel.removeFavorite(fav.text) },
+                                    style = ActionStyle.Paper
                                 )
                             }
                         }
                     }
+                    item {
+                        Spacer(
+                            Modifier
+                                .navigationBarsPadding()
+                                .height(BottomBarSpace)
+                        )
+                    }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun FavoriteCard(
-    navHostController: NavHostController?,
-    text: String,
-    category: String,
-    onRemove: () -> Unit,
-    onCopy: () -> Unit,
-    onShare: () -> Unit,
-
-) {
-    var copied by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable {
-            navHostController?.navigate(ShayariRoutingItems.finalShayriScreen.route + "/$text")
-        },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(Color.Black),
-        border = BorderStroke(1.5.dp, Color.White),
-
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            // Category chip
-            Card(
-                colors = CardDefaults.cardColors(Color(0xFFEED045).copy(alpha = 0.18f)),
-                shape = RoundedCornerShape(100.dp)
-            ) {
-                Text(
-                    text = category,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-                    fontSize = 11.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Shayari Text
-            Text(
-                text = text,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-                style = TextStyle(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 28.sp,
-                    fontFamily = FontFamily.Serif
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(Modifier.fillMaxWidth(), thickness = 1.dp, color = Color.White)
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Action Buttons Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Copy
-                ActionChip(
-
-                    icon = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                    label = if (copied) "Copied!" else "Copy",
-                    tint = if (copied) Color(0xFF15B768) else Color.Black,
-                    onClick = {
-                        onCopy()
-                        copied = true
-                        Handler(Looper.getMainLooper()).postDelayed({ copied = false }, 1500)
-                    }
-                )
-                // Share
-                ActionChip(
-                    icon = Icons.Default.Share,
-                    label = "Share",
-                    tint = Color.Black,
-                    onClick = onShare
-                )
-                // Remove
-                ActionChip(
-                    icon = Icons.Default.Star,
-                    label = "Remove",
-                    tint = Color.Black,
-                    onClick = onRemove
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ActionChip(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    tint: Color,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.clickable { onClick() },
-        colors = CardDefaults.cardColors(Color.White),
-        shape = RoundedCornerShape(100.dp),
-        border = BorderStroke(0.2.dp, Color.Black)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(16.dp))
-            Text(text = label, fontSize = 12.sp, color = tint, fontWeight = FontWeight.Medium)
         }
     }
 }

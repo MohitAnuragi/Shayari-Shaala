@@ -7,4 +7,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Same as Paper in ui/theme/Color.kt -->
+    <color name="paper">#FFF4EDE0</color>
+    <!-- Same as BentoBlack in ui/theme/Color.kt; adaptive launcher icon background -->
+    <color name="ic_launcher_background">#FF151515</color>
 </resources>

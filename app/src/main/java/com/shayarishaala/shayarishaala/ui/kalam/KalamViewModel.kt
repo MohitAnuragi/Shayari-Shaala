@@ -21,6 +21,15 @@ data class KalamUiState(
     val generationCount: Int = 0
 )
 
+data class ShayariEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id : Int,
+    val textShayri : String,
+//    val prompt : String,
+    val createdAt : System.currentTimeMillis(),
+    val isFavorite : Boolean = false
+)
+
 class KalamViewModel(
     private val repository: KalamRepository,
     private val preferenceManager: PreferenceManager

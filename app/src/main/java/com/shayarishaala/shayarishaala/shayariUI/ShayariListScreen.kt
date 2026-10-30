@@ -1,161 +1,27 @@
 package com.shayarishaala.shayarishaala.shayariUI
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarOutline
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import com.shayarishaala.shayarishaala.Model.Routing.ShayariRoutingItems
-import com.shayarishaala.shayarishaala.data.getList
-import com.shayarishaala.shayarishaala.favorites.FavoriteViewModel
-import com.shayarishaala.shayarishaala.ui.theme.Purple40
+import com.shayarishaala.shayarishaala.data.repository.ContentRepository
+import com.shayarishaala.shayarishaala.ui.components.ShayariCollection
 
 @Composable
 fun ShayariListItem(navHostController: NavHostController? = null, title: String?) {
-    val favoriteViewModel: FavoriteViewModel = viewModel()
+    val context = LocalContext.current
+    val categories = remember { ContentRepository.getShayariCategories(context) }
+    val categoryIndex = remember(title) { categories.indexOfFirst { it.title == title } }
+    val shayariList = remember(title) { categories.getOrNull(categoryIndex)?.list.orEmpty() }
 
-    Surface() {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = Purple40)
-                .padding(top = 35.dp, bottom = 35.dp)
-        ) {
-            Column() {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .size(45.dp)
-                            .clickable {
-                                navHostController?.navigate("category")
-                            },
-                        colors = CardDefaults.cardColors(Color.White),
-                        shape = RoundedCornerShape(200.dp)
-                    ) {
-                        Box(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 9.dp), contentAlignment = Alignment.Center) {
-                            Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "back")
-                        }
-                    }
-                    if (title != null) {
-                        Text(
-                            text = title,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 28.sp,
-                            modifier = Modifier.padding(start = 15.dp)
-                        )
-                    }
-                }
-
-                val myFinalList = getList().filter {
-                    it.title == title.toString()
-                }
-                val finalList = myFinalList[0]
-                finalList.list?.let { list ->
-                    LazyColumn {
-                        items(list) { item ->
-                            ShayariCardWithFavorite(
-                                item = item,
-                                category = title ?: "Shayari",
-                                favoriteViewModel = favoriteViewModel,
-                                onClick = {
-                                    navHostController?.navigate(ShayariRoutingItems.finalShayriScreen.route + "/$item")
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ShayariCardWithFavorite(
-    item: String,
-    category: String,
-    favoriteViewModel: FavoriteViewModel,
-    onClick: () -> Unit
-) {
-    val isFavorite by favoriteViewModel.isFavorite(item).collectAsStateWithLifecycle(initialValue = false)
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 15.dp, top = 15.dp, end = 15.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
-        border = BorderStroke(width = 2.dp, color = Color.White)
-    ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = item,
-                color = Color.White,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 30.dp, top = 30.dp, end = 60.dp, bottom = 30.dp),
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            )
-
-            // ⭐ Favorite icon – top right corner
-            Icon(
-                imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                tint = if (isFavorite) Color(0xFFFFD700) else Color.White.copy(alpha = 0.5f),
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(10.dp)
-                    .size(26.dp)
-                    .clickable {
-                        favoriteViewModel.toggleFavorite(item, category)
-                    }
-            )
-        }
-    }
+    ShayariCollection(
+        navHostController = navHostController,
+        title = title,
+        items = shayariList,
+        category = title ?: "Shayari",
+        type = ShayariRoutingItems.finalShayriScreen.TYPE_SHAYARI,
+        noun = "shayari",
+        moodIndex = categoryIndex
+    )
 }

@@ -1,33 +1,34 @@
 package com.shayarishaala.shayarishaala.ui.studio
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.view.PixelCopy
-import android.view.View
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,18 +40,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
+import androidx.compose.material.icons.automirrored.filled.FormatAlignRight
 import androidx.compose.material.icons.filled.FormatAlignCenter
-import androidx.compose.material.icons.filled.FormatAlignLeft
-import androidx.compose.material.icons.filled.FormatAlignRight
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.TextFields
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Layers
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.TextFields
+import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -67,42 +67,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.GraphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.shayarishaala.shayarishaala.commonUI.AppTopBar
-import com.shayarishaala.shayarishaala.ui.theme.Purple40
-import kotlinx.coroutines.Dispatchers
+import com.shayarishaala.shayarishaala.ui.components.KaagazTopBar
+import com.shayarishaala.shayarishaala.ui.components.PillButton
+import com.shayarishaala.shayarishaala.ui.components.PillStyle
+import com.shayarishaala.shayarishaala.ui.components.pressClick
+import com.shayarishaala.shayarishaala.ui.theme.BentoBlack
+import com.shayarishaala.shayarishaala.ui.theme.DashRule
+import com.shayarishaala.shayarishaala.ui.theme.Ink
+import com.shayarishaala.shayarishaala.ui.theme.InkMuted
+import com.shayarishaala.shayarishaala.ui.theme.Lime
+import com.shayarishaala.shayarishaala.ui.theme.Motion
+import com.shayarishaala.shayarishaala.ui.theme.Paper
+import com.shayarishaala.shayarishaala.ui.theme.PaperCard
+import com.shayarishaala.shayarishaala.utils.ShareUtils
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-
-// ═══════════════════════════════════════════════════════════════════
-//  Theme constants — kept in sync with the rest of the app
-// ═══════════════════════════════════════════════════════════════════
-private val ActiveTabColor   = Purple40            // Color(0xFF8677B4)
-private val InactiveTabColor = Color.White
-private val InactiveBorder   = Color.Black.copy(alpha = 0.15f)
-private val LabelActive      = Color.White
-private val LabelInactive    = Color.Black.copy(alpha = 0.65f)
-private val PanelBackground  = Color.White
-private val SectionLabelColor = Purple40
+import kotlin.math.roundToInt
 
 // ═══════════════════════════════════════════════════════════════════
 //  Entry composable — wires ViewModel and navigation
@@ -114,42 +116,35 @@ fun ShayariStudioScreen(navHostController: NavHostController, shayariText: Strin
     )
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
-    val rootView = LocalView.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var previewCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+    // The preview card draws itself into this layer, which is what gets exported.
+    val previewLayer = rememberGraphicsLayer()
 
     // React to export result
     LaunchedEffect(state.exportResult) {
         state.exportResult?.let { result ->
             when (result) {
                 is ExportResult.Success -> snackbarHostState.showSnackbar(result.message)
-                is ExportResult.Failure -> snackbarHostState.showSnackbar(" ${result.message}")
+                is ExportResult.Failure -> snackbarHostState.showSnackbar(result.message)
             }
             viewModel.clearExportResult()
         }
     }
 
     // Capture helper — called both for download and share
-    suspend fun capturePreviewBitmap(): Bitmap? {
-        val coords = previewCoords ?: return null
-        val windowPos = coords.positionInWindow()
-        val size = coords.size
-        val bounds = android.graphics.Rect(
-            windowPos.x.toInt(),
-            windowPos.y.toInt(),
-            (windowPos.x + size.width).toInt(),
-            (windowPos.y + size.height).toInt()
-        )
-        return withContext(Dispatchers.IO) {
-            captureView(context as Activity, rootView, bounds)
-        }
-    }
+    suspend fun capturePreviewBitmap(): Bitmap? = runCatching {
+        previewLayer.toImageBitmap()
+            .asAndroidBitmap()
+            // Hardware bitmaps can't be scaled or compressed; take a software copy
+            .copy(Bitmap.Config.ARGB_8888, false)
+    }.getOrNull()
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        // Use app's Purple40 background — consistent with all other screens
-        containerColor = Purple40
+        snackbarHost = { SnackbarHost(snackbarHostState, Modifier.navigationBarsPadding()) },
+        containerColor = Paper,
+        contentWindowInsets = WindowInsets(0)
     ) { scaffoldPadding ->
         Column(
             modifier = Modifier
@@ -157,16 +152,16 @@ fun ShayariStudioScreen(navHostController: NavHostController, shayariText: Strin
                 .padding(scaffoldPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // ── Top Bar — shared AppTopBar matching KalamScreen/Home ─────────
-            AppTopBar(
-                title = " SHAYARI STUDIO",
-                onBackClick = { navHostController.popBackStack() }
+            KaagazTopBar(
+                title = "स्टूडियो",
+                subtitle = "Studio · शायरी को कार्ड बनाएं",
+                onBack = dropUnlessResumed { navHostController.popBackStack() }
             )
 
             // ── Preview ─────────────────────────────────────────────────────
             // The preview box is fillMaxWidth + wrapContentHeight so text
-            // is never clipped by a fixed aspect-ratio constraint. The bitmap
-            // capture still scales to 1080×1080 in the export path.
+            // is never clipped by a fixed aspect-ratio constraint. The export
+            // keeps this aspect ratio, scaled to 1080 px wide.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -175,26 +170,29 @@ fun ShayariStudioScreen(navHostController: NavHostController, shayariText: Strin
             ) {
                 ShayariPreviewCard(
                     state = state,
+                    exportLayer = previewLayer,
                     modifier = Modifier
                         .fillMaxWidth(0.88f)
                         .wrapContentHeight()
-                        .onGloballyPositioned { previewCoords = it }
                 )
             }
 
-            // ── Tool Tab Row ─────────────────────────────────────────────────
             StudioToolTabRow(
                 activeTool = state.activeTool,
                 onToolSelected = { viewModel.onToolSelected(it) }
             )
 
-            // ── Picker Panel ─────────────────────────────────────────────────
+            // Keep showing the last tool while the panel collapses, so it doesn't go blank mid-animation
+            var lastTool by remember { mutableStateOf(state.activeTool) }
+            if (state.activeTool != null) lastTool = state.activeTool
+
             AnimatedVisibility(
                 visible = state.activeTool != null,
-                enter = expandVertically(tween(250)) + fadeIn(tween(200)),
-                exit = shrinkVertically(tween(200)) + fadeOut(tween(150))
+                enter = expandVertically(tween(Motion.MEDIUM, easing = Motion.EmphasizedDecelerate)) + fadeIn(tween(Motion.MEDIUM)),
+                exit = shrinkVertically(tween(Motion.SHORT)) + fadeOut(tween(Motion.SHORT))
             ) {
                 StudioPickerPanel(
+                    tool = state.activeTool ?: lastTool,
                     state = state,
                     onBackgroundSelected = { viewModel.onBackgroundSelected(it) },
                     onFontSelected = { viewModel.onFontSelected(it) },
@@ -206,22 +204,21 @@ fun ShayariStudioScreen(navHostController: NavHostController, shayariText: Strin
                     onDownloadClick = {
                         scope.launch {
                             val bmp = capturePreviewBitmap() ?: return@launch
-                            // Scale to 1080×1080 for consistent export quality
-                            val scaled = Bitmap.createScaledBitmap(bmp, 1080, 1080, true)
+                            val scaled = bmp.scaleToWidth()
                             viewModel.saveImage(context, scaled)
                         }
                     },
                     onShareClick = {
                         scope.launch {
                             val bmp = capturePreviewBitmap() ?: return@launch
-                            val scaled = Bitmap.createScaledBitmap(bmp, 1080, 1080, true)
+                            val scaled = bmp.scaleToWidth()
                             val uri = viewModel.getShareUri(context, scaled) ?: return@launch
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "image/png"
                                 putExtra(Intent.EXTRA_STREAM, uri)
                                 putExtra(
                                     Intent.EXTRA_TEXT,
-                                    "📱 Shayari Shaala App:\nhttps://play.google.com/store/apps/details?id=com.shayarishaala.shayarishaala"
+                                    "📱 Shayari Shaala App:\n${ShareUtils.PLAY_STORE_URL}"
                                 )
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
@@ -230,19 +227,36 @@ fun ShayariStudioScreen(navHostController: NavHostController, shayariText: Strin
                     }
                 )
             }
+
+            Spacer(
+                Modifier
+                    .navigationBarsPadding()
+                    .height(24.dp)
+            )
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  Preview card — this is the composable that gets captured as PNG
+//  Preview card — this is the composable that gets exported as PNG
 // ═══════════════════════════════════════════════════════════════════
 @Composable
-fun ShayariPreviewCard(state: ShayariStudioUiState, modifier: Modifier = Modifier) {
+fun ShayariPreviewCard(
+    state: ShayariStudioUiState,
+    modifier: Modifier = Modifier,
+    exportLayer: GraphicsLayer? = null,
+) {
     Box(
         modifier = modifier
             .shadow(elevation = 24.dp, shape = RoundedCornerShape(20.dp), clip = false)
             .clip(RoundedCornerShape(20.dp))
+            // Recorded inside the clip: the export is the full square card, nothing from the screen around it
+            .then(
+                if (exportLayer != null) Modifier.drawWithContent {
+                    exportLayer.record { this@drawWithContent.drawContent() }
+                    drawLayer(exportLayer)
+                } else Modifier
+            )
             .background(state.selectedBackground.brush),
         contentAlignment = Alignment.Center
     ) {
@@ -349,12 +363,21 @@ fun ShayariPreviewCard(state: ShayariStudioUiState, modifier: Modifier = Modifie
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  Tool tab row — aligned to app theme (Purple40 bg, white cards)
+//  Tool tabs — black bento pill with a sliding lime indicator
 // ═══════════════════════════════════════════════════════════════════
 private data class ToolTabItem(
     val tool: StudioTool,
     val label: String,
-    val icon: @Composable () -> Unit
+    val icon: ImageVector
+)
+
+private val toolTabs = listOf(
+    ToolTabItem(StudioTool.THEME, "Theme", Icons.Outlined.Wallpaper),
+    ToolTabItem(StudioTool.FONT, "Font", Icons.Outlined.TextFields),
+    ToolTabItem(StudioTool.COLOR, "Color", Icons.Outlined.Palette),
+    ToolTabItem(StudioTool.ALIGNMENT, "Align", Icons.Filled.FormatAlignCenter),
+    ToolTabItem(StudioTool.CARD_STYLE, "Style", Icons.Outlined.Layers),
+    ToolTabItem(StudioTool.DOWNLOAD, "Export", Icons.Outlined.Download)
 )
 
 @Composable
@@ -362,58 +385,53 @@ private fun StudioToolTabRow(
     activeTool: StudioTool?,
     onToolSelected: (StudioTool) -> Unit
 ) {
-    val tabs = listOf(
-        ToolTabItem(StudioTool.THEME, "Theme") { Text("🎨", fontSize = 20.sp) },
-        ToolTabItem(StudioTool.FONT, "Font") { Icon(Icons.Default.TextFields, null, Modifier.size(22.dp)) },
-        ToolTabItem(StudioTool.COLOR, "Color") { Icon(Icons.Default.Palette, null, Modifier.size(22.dp)) },
-        ToolTabItem(StudioTool.ALIGNMENT, "Align") { Icon(Icons.Default.FormatAlignCenter, null, Modifier.size(22.dp)) },
-        ToolTabItem(StudioTool.CARD_STYLE, "Style") { Text("🪟", fontSize = 20.sp) },
-        ToolTabItem(StudioTool.DOWNLOAD, "Export") { Icon(Icons.Default.Download, null, Modifier.size(22.dp)) }
-    )
-
-    LazyRow(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            // Match app background — seamless continuation of Purple40 screen
-            .background(Purple40)
-            .padding(vertical = 10.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(50))
+            .background(BentoBlack)
+            .padding(5.dp)
     ) {
-        items(tabs) { tab ->
-            val isActive = activeTool == tab.tool
-            val scale by animateFloatAsState(
-                targetValue = if (isActive) 1.05f else 1f,
-                animationSpec = tween(150),
-                label = "tab_scale"
-            )
-
-            Card(
+        val tabWidth = maxWidth / toolTabs.size
+        val activeIndex = toolTabs.indexOfFirst { it.tool == activeTool }
+        val indicatorX by animateDpAsState(
+            targetValue = tabWidth * activeIndex.coerceAtLeast(0),
+            animationSpec = Motion.bouncySpring(),
+            label = "toolIndicator"
+        )
+        if (activeIndex >= 0) {
+            Box(
                 modifier = Modifier
-                    .graphicsLayer { scaleX = scale; scaleY = scale }
-                    .clickable { onToolSelected(tab.tool) },
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isActive) ActiveTabColor else InactiveTabColor
-                ),
-                border = if (isActive) null else BorderStroke(1.dp, InactiveBorder)
-            ) {
+                    .offset(x = indicatorX)
+                    .width(tabWidth)
+                    .height(60.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Lime)
+            )
+        }
+        Row {
+            toolTabs.forEach { tab ->
+                val isActive = activeTool == tab.tool
+                val content by animateColorAsState(
+                    if (isActive) BentoBlack else PaperCard,
+                    label = "toolTint"
+                )
                 Column(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    modifier = Modifier
+                        .width(tabWidth)
+                        .height(60.dp)
+                        .pressClick(pressedScale = 0.9f, role = Role.Tab) { onToolSelected(tab.tool) }
+                        .semantics { selected = isActive },
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)
                 ) {
-                    androidx.compose.runtime.CompositionLocalProvider(
-                        androidx.compose.material3.LocalContentColor provides
-                                if (isActive) LabelActive else LabelInactive
-                    ) {
-                        tab.icon()
-                    }
+                    Icon(tab.icon, contentDescription = null, tint = content, modifier = Modifier.size(22.dp))
                     Text(
                         text = tab.label,
-                        fontSize = 10.sp,
-                        color = if (isActive) LabelActive else LabelInactive,
-                        fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
+                        style = MaterialTheme.typography.labelSmall,
+                        color = content,
+                        maxLines = 1
                     )
                 }
             }
@@ -422,10 +440,11 @@ private fun StudioToolTabRow(
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  Picker panel — white background, consistent with app card surfaces
+//  Picker panel — white rounded sheet, content slides between tools
 // ═══════════════════════════════════════════════════════════════════
 @Composable
 private fun StudioPickerPanel(
+    tool: StudioTool?,
     state: ShayariStudioUiState,
     onBackgroundSelected: (ShayariBackground) -> Unit,
     onFontSelected: (ShayariFont) -> Unit,
@@ -440,41 +459,82 @@ private fun StudioPickerPanel(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(PanelBackground)
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+            .clip(RoundedCornerShape(26.dp))
+            .background(PaperCard)
             .padding(vertical = 16.dp)
     ) {
-        when (state.activeTool) {
-            StudioTool.THEME -> ThemePicker(
-                selected = state.selectedBackground,
-                onSelected = onBackgroundSelected
-            )
-            StudioTool.FONT -> FontPicker(
-                selectedFont = state.selectedFont,
-                selectedSize = state.selectedTextSize,
-                onFontSelected = onFontSelected,
-                onSizeSelected = onTextSizeSelected
-            )
-            StudioTool.COLOR -> ColorPicker(
-                selected = state.selectedTextColor,
-                onSelected = onColorSelected
-            )
-            StudioTool.ALIGNMENT -> AlignmentPicker(
-                selected = state.selectedAlignment,
-                onSelected = onAlignmentSelected
-            )
-            StudioTool.CARD_STYLE -> CardStylePicker(
-                selected = state.selectedCardStyle,
-                onSelected = onCardStyleSelected
-            )
-            StudioTool.DOWNLOAD -> ExportPanel(
-                isExporting = isExporting,
-                onDownloadClick = onDownloadClick,
-                onShareClick = onShareClick
-            )
-            null -> { /* hidden */ }
+        AnimatedContent(
+            targetState = tool,
+            transitionSpec = {
+                val forward = (targetState?.ordinal ?: 0) >= (initialState?.ordinal ?: 0)
+                (slideInHorizontally(tween(Motion.MEDIUM, easing = Motion.EmphasizedDecelerate)) { if (forward) it / 4 else -it / 4 } +
+                    fadeIn(tween(Motion.MEDIUM)))
+                    .togetherWith(fadeOut(tween(Motion.SHORT)) + slideOutHorizontally(tween(Motion.SHORT)) { if (forward) -it / 6 else it / 6 })
+            },
+            label = "pickerContent"
+        ) { shownTool ->
+            when (shownTool) {
+                StudioTool.THEME -> ThemePicker(
+                    selected = state.selectedBackground,
+                    onSelected = onBackgroundSelected
+                )
+                StudioTool.FONT -> FontPicker(
+                    selectedFont = state.selectedFont,
+                    selectedSize = state.selectedTextSize,
+                    onFontSelected = onFontSelected,
+                    onSizeSelected = onTextSizeSelected
+                )
+                StudioTool.COLOR -> ColorPicker(
+                    selected = state.selectedTextColor,
+                    onSelected = onColorSelected
+                )
+                StudioTool.ALIGNMENT -> AlignmentPicker(
+                    selected = state.selectedAlignment,
+                    onSelected = onAlignmentSelected
+                )
+                StudioTool.CARD_STYLE -> CardStylePicker(
+                    selected = state.selectedCardStyle,
+                    onSelected = onCardStyleSelected
+                )
+                StudioTool.DOWNLOAD -> ExportPanel(
+                    isExporting = isExporting,
+                    onDownloadClick = onDownloadClick,
+                    onShareClick = onShareClick
+                )
+                null -> Spacer(Modifier.height(1.dp))
+            }
         }
     }
 }
+
+/** Selectable box used by every picker: black when selected, paper with a hairline otherwise. */
+@Composable
+private fun ChoiceBox(
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(16.dp),
+    content: @Composable (contentColor: Color) -> Unit
+) {
+    val container by animateColorAsState(if (selected) BentoBlack else Paper, label = "choiceFill")
+    val contentColor by animateColorAsState(if (selected) PaperCard else Ink, label = "choiceContent")
+    Box(
+        modifier = modifier
+            .pressClick(pressedScale = 0.93f) { onClick() }
+            .semantics { this.selected = selected }
+            .clip(shape)
+            .background(container)
+            .then(if (selected) Modifier else Modifier.border(1.dp, DashRule, shape)),
+        contentAlignment = Alignment.Center
+    ) {
+        content(contentColor)
+    }
+}
+
+/** Ring drawn around the selected swatch. */
+private fun Modifier.selectionRing(selected: Boolean, shape: Shape, ringColor: Color = BentoBlack): Modifier =
+    if (!selected) this else this.border(3.dp, ringColor, shape).padding(5.dp)
 
 // ─────────────────────────────────────────────
 //  Theme picker
@@ -485,7 +545,7 @@ private fun ThemePicker(
     onSelected: (ShayariBackground) -> Unit
 ) {
     Column {
-        PickerSectionLabel("🎨  Background Theme")
+        PickerSectionLabel("Background")
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -494,33 +554,32 @@ private fun ThemePicker(
                 val isSelected = bg == selected
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { onSelected(bg) }
+                    modifier = Modifier
+                        .width(64.dp)
+                        .pressClick(pressedScale = 0.9f) { onSelected(bg) }
+                        .semantics {
+                            contentDescription = bg.displayName
+                            this.selected = isSelected
+                        }
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(60.dp)
+                            .selectionRing(isSelected, RoundedCornerShape(18.dp))
                             .clip(RoundedCornerShape(14.dp))
-                            .background(bg.brush)
-                            .then(
-                                if (isSelected) Modifier.drawBehind {
-                                    drawRoundRect(
-                                        color = ActiveTabColor,
-                                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(14.dp.toPx()),
-                                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
-                                    )
-                                } else Modifier
-                            ),
+                            .background(bg.brush),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(bg.emoji, fontSize = 22.sp)
+                        Text(bg.emoji, fontSize = 20.sp)
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = bg.displayName,
-                        fontSize = 9.sp,
-                        color = LabelInactive,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isSelected) Ink else InkMuted,
                         textAlign = TextAlign.Center,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -539,24 +598,19 @@ private fun FontPicker(
     onSizeSelected: (TextSizeOption) -> Unit
 ) {
     Column {
-        PickerSectionLabel(" Font Style")
+        PickerSectionLabel("Font")
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(ShayariFont.entries) { font ->
-                val isSelected = font == selectedFont
-                Card(
+                ChoiceBox(
+                    selected = font == selectedFont,
+                    onClick = { onFontSelected(font) },
                     modifier = Modifier
-                        .height(68.dp)
-                        .width(80.dp)
-                        .clickable { onFontSelected(font) },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) ActiveTabColor else InactiveTabColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    border = if (isSelected) null else BorderStroke(1.dp, InactiveBorder)
-                ) {
+                        .height(76.dp)
+                        .width(88.dp)
+                ) { color ->
                     Column(
                         Modifier
                             .fillMaxSize()
@@ -568,24 +622,26 @@ private fun FontPicker(
                             text = "अ Aa",
                             fontFamily = font.fontFamily,
                             fontWeight = font.previewWeight,
-                            fontSize = 16.sp,
-                            color = if (isSelected) LabelActive else LabelInactive
+                            fontSize = 18.sp,
+                            color = color
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
                             text = font.displayName,
-                            fontSize = 8.sp,
-                            color = if (isSelected) LabelActive else Color.Black.copy(alpha = 0.4f),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 10.sp,
+                            color = color.copy(alpha = 0.75f),
                             textAlign = TextAlign.Center,
-                            maxLines = 1
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
         }
 
-        Spacer(Modifier.height(12.dp))
-        PickerSectionLabel(" Text Size")
+        Spacer(Modifier.height(14.dp))
+        PickerSectionLabel("Text size")
 
         Row(
             modifier = Modifier
@@ -594,26 +650,19 @@ private fun FontPicker(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             TextSizeOption.entries.forEach { size ->
-                val isSelected = size == selectedSize
-                Card(
+                ChoiceBox(
+                    selected = size == selectedSize,
+                    onClick = { onSizeSelected(size) },
+                    shape = RoundedCornerShape(50),
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp)
-                        .clickable { onSizeSelected(size) },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) ActiveTabColor else InactiveTabColor
-                    ),
-                    shape = RoundedCornerShape(10.dp),
-                    border = if (isSelected) null else BorderStroke(1.dp, InactiveBorder)
-                ) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = size.displayName,
-                            color = if (isSelected) LabelActive else LabelInactive,
-                            fontSize = 13.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
+                ) { color ->
+                    Text(
+                        text = size.displayName,
+                        color = color,
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         }
@@ -629,7 +678,7 @@ private fun ColorPicker(
     onSelected: (TextColorOption) -> Unit
 ) {
     Column {
-        PickerSectionLabel(" Text Color")
+        PickerSectionLabel("Text colour")
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -638,28 +687,26 @@ private fun ColorPicker(
                 val isSelected = option == selected
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { onSelected(option) }
+                    modifier = Modifier
+                        .pressClick(pressedScale = 0.88f) { onSelected(option) }
+                        .semantics {
+                            contentDescription = option.displayName
+                            this.selected = isSelected
+                        }
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(52.dp)
+                            .selectionRing(isSelected, CircleShape)
                             .clip(CircleShape)
                             .background(option.color)
-                            .then(
-                                if (isSelected) Modifier.drawBehind {
-                                    drawCircle(
-                                        color = ActiveTabColor,
-                                        radius = size.minDimension / 2f + 3.dp.toPx(),
-                                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
-                                    )
-                                } else Modifier
-                            )
+                            .border(1.dp, DashRule, CircleShape)
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = option.displayName,
-                        fontSize = 9.sp,
-                        color = LabelInactive,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isSelected) Ink else InkMuted,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -677,7 +724,7 @@ private fun AlignmentPicker(
     onSelected: (TextAlignOption) -> Unit
 ) {
     Column {
-        PickerSectionLabel(" Text Alignment")
+        PickerSectionLabel("Alignment")
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -685,42 +732,24 @@ private fun AlignmentPicker(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             val alignItems = listOf(
-                Triple(TextAlignOption.LEFT, Icons.Default.FormatAlignLeft, "Left"),
-                Triple(TextAlignOption.CENTER, Icons.Default.FormatAlignCenter, "Center"),
-                Triple(TextAlignOption.RIGHT, Icons.Default.FormatAlignRight, "Right")
+                Triple(TextAlignOption.LEFT, Icons.AutoMirrored.Filled.FormatAlignLeft, "Left"),
+                Triple(TextAlignOption.CENTER, Icons.Filled.FormatAlignCenter, "Center"),
+                Triple(TextAlignOption.RIGHT, Icons.AutoMirrored.Filled.FormatAlignRight, "Right")
             )
             alignItems.forEach { (option, icon, label) ->
-                val isSelected = option == selected
-                Card(
+                ChoiceBox(
+                    selected = option == selected,
+                    onClick = { onSelected(option) },
                     modifier = Modifier
                         .weight(1f)
-                        .height(64.dp)
-                        .clickable { onSelected(option) },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) ActiveTabColor else InactiveTabColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    border = if (isSelected) null else BorderStroke(1.dp, InactiveBorder)
-                ) {
+                        .height(68.dp)
+                ) { color ->
                     Column(
-                        Modifier
-                            .fillMaxSize()
-                            .padding(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = label,
-                            tint = if (isSelected) LabelActive else LabelInactive,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = label,
-                            fontSize = 11.sp,
-                            color = if (isSelected) LabelActive else LabelInactive,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
+                        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
+                        Text(text = label, style = MaterialTheme.typography.labelMedium, color = color)
                     }
                 }
             }
@@ -737,38 +766,27 @@ private fun CardStylePicker(
     onSelected: (CardStyle) -> Unit
 ) {
     Column {
-        PickerSectionLabel(" Card Style")
+        PickerSectionLabel("Card style")
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(CardStyle.entries) { style ->
-                val isSelected = style == selected
-                Card(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clickable { onSelected(style) },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) ActiveTabColor else InactiveTabColor
-                    ),
-                    shape = RoundedCornerShape(14.dp),
-                    border = if (isSelected) null else BorderStroke(1.dp, InactiveBorder)
-                ) {
+                ChoiceBox(
+                    selected = style == selected,
+                    onClick = { onSelected(style) },
+                    modifier = Modifier.size(84.dp)
+                ) { color ->
                     Column(
-                        Modifier
-                            .fillMaxSize()
-                            .padding(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(style.emoji, fontSize = 24.sp)
-                        Spacer(Modifier.height(4.dp))
                         Text(
                             text = style.displayName,
-                            fontSize = 9.sp,
-                            color = if (isSelected) LabelActive else LabelInactive,
-                            textAlign = TextAlign.Center,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            style = MaterialTheme.typography.labelSmall,
+                            color = color,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
@@ -787,67 +805,32 @@ private fun ExportPanel(
     onShareClick: () -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        PickerSectionLabel("⬇ Export Shayari")
-
+        PickerSectionLabel("Export · 1080 px PNG")
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Download button — primary style (Purple40 fill)
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp)
-                    .clickable(enabled = !isExporting) { onDownloadClick() },
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isExporting) Color.LightGray else ActiveTabColor
-                ),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    if (isExporting) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(Icons.Default.Download, null, tint = Color.White, modifier = Modifier.size(20.dp))
-                            Text("Save Image", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        }
-                    }
-                }
-            }
-
-            // Share button — secondary style (white fill, Purple40 border)
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp)
-                    .clickable(enabled = !isExporting) { onShareClick() },
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.5.dp, ActiveTabColor)
-            ) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(Icons.Default.Share, null, tint = ActiveTabColor, modifier = Modifier.size(20.dp))
-                        Text("Share", color = ActiveTabColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    }
-                }
-            }
+            PillButton(
+                text = "Save Image",
+                icon = Icons.Outlined.Download,
+                onClick = onDownloadClick,
+                enabled = !isExporting,
+                loading = isExporting,
+                modifier = Modifier.weight(1f)
+            )
+            PillButton(
+                text = "Share",
+                icon = Icons.Outlined.Share,
+                onClick = onShareClick,
+                enabled = !isExporting,
+                style = PillStyle.Outline,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -859,63 +842,18 @@ private fun ExportPanel(
 private fun PickerSectionLabel(text: String) {
     Text(
         text = text,
-        color = SectionLabelColor,
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.titleSmall,
+        color = InkMuted,
         modifier = Modifier.padding(start = 16.dp, bottom = 10.dp)
     )
 }
 
-// ═══════════════════════════════════════════════════════════════════
-//  Capture utility — PixelCopy (API 26+) with canvas fallback
-// ═══════════════════════════════════════════════════════════════════
-private fun captureView(
-    activity: Activity,
-    view: View,
-    bounds: android.graphics.Rect
-): Bitmap {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val bitmap = Bitmap.createBitmap(bounds.width(), bounds.height(), Bitmap.Config.ARGB_8888)
-        var result: Bitmap? = null
-        var done = false
-        val lock = Object()
+private const val EXPORT_WIDTH_PX = 1080
 
-        PixelCopy.request(
-            activity.window,
-            bounds,
-            bitmap,
-            { copyResult ->
-                result = if (copyResult == PixelCopy.SUCCESS) bitmap else null
-                synchronized(lock) {
-                    done = true
-                    (lock as Object).notifyAll()
-                }
-            },
-            Handler(Looper.getMainLooper())
-        )
-
-        synchronized(lock) {
-            var waited = 0
-            while (!done && waited < 3000) {
-                lock.wait(100)
-                waited += 100
-            }
-        }
-        result ?: fallbackCapture(view, bounds)
-    } else {
-        fallbackCapture(view, bounds)
-    }
-}
-
-private fun fallbackCapture(view: View, bounds: android.graphics.Rect): Bitmap {
-    val full = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
-    val canvas = android.graphics.Canvas(full)
-    view.draw(canvas)
-    return Bitmap.createBitmap(
-        full,
-        bounds.left.coerceIn(0, full.width - 1),
-        bounds.top.coerceIn(0, full.height - 1),
-        bounds.width().coerceAtMost(full.width - bounds.left),
-        bounds.height().coerceAtMost(full.height - bounds.top)
-    )
+/** Scales to [targetWidth] keeping the aspect ratio, and recycles the source if a copy was made. */
+private fun Bitmap.scaleToWidth(targetWidth: Int = EXPORT_WIDTH_PX): Bitmap {
+    val targetHeight = (height * targetWidth / width.toFloat()).roundToInt().coerceAtLeast(1)
+    val scaled = Bitmap.createScaledBitmap(this, targetWidth, targetHeight, true)
+    if (scaled !== this) recycle()
+    return scaled
 }
