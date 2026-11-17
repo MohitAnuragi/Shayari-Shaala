@@ -46,6 +46,7 @@ class ShayariStudioViewModel(initialText: String) : ViewModel() {
     companion object {
         private const val FILE_PROVIDER_AUTHORITY =
             "com.shayarishaala.shayarishaala.provider"
+        private const val SHARE_CACHE_MILLIS = 60 * 60 * 1000L
 
         fun factory(initialText: String) = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -107,7 +108,7 @@ class ShayariStudioViewModel(initialText: String) : ViewModel() {
                     saveToGallery(context, bitmap)
                     ExportResult.Success()
                 } catch (e: Exception) {
-                    ExportResult.Failure(e.message ?: "Unknown error")
+                    ExportResult.Failure("इमेज सेव नहीं हो पाई, दोबारा कोशिश करें")
                 }
             }
             _state.value = _state.value.copy(isExporting = false, exportResult = result)
@@ -118,6 +119,9 @@ class ShayariStudioViewModel(initialText: String) : ViewModel() {
     fun getShareUri(context: Context, bitmap: Bitmap): Uri? {
         return try {
             val imagesDir = File(context.cacheDir, "images").also { it.mkdirs() }
+            // Shared images are only needed briefly; don't let them pile up in storage
+            val staleBefore = System.currentTimeMillis() - SHARE_CACHE_MILLIS
+            imagesDir.listFiles()?.filter { it.lastModified() < staleBefore }?.forEach { it.delete() }
             val imageFile = File(imagesDir, "shayari_shaala_${System.currentTimeMillis()}.png")
             FileOutputStream(imageFile).use { out ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)

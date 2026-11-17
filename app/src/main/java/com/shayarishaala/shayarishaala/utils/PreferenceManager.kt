@@ -12,6 +12,14 @@ class PreferenceManager(context: Context) {
         private const val GENERATION_COUNT_KEY = "generation_count"
         private const val GENERATION_DATE_KEY = "generation_date"
         private const val FAVORITES_SET_KEY = "favorites_set"
+        private const val AI_CONSENT_KEY = "ai_consent"
+    }
+
+    /** Whether the user accepted the Kalam AI disclosure; nothing is sent to Gemini before this. */
+    fun hasAiConsent(): Boolean = sharedPreferences.getBoolean(AI_CONSENT_KEY, false)
+
+    fun setAiConsent(accepted: Boolean) {
+        sharedPreferences.edit().putBoolean(AI_CONSENT_KEY, accepted).apply()
     }
 
     fun incrementGenerationCount() {

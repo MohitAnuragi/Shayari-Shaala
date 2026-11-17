@@ -27,5 +27,6 @@ import android.net.Uri
      object kalamScreen : ShayariRoutingItems("kalam_screen")
      object favoritesScreen : ShayariRoutingItems("favorites")
      object studioScreen : ShayariRoutingItems("shayari_studio")
+     object privacyScreen : ShayariRoutingItems("privacy")
 
  }

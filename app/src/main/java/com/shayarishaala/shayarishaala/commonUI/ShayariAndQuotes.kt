@@ -211,6 +211,16 @@ fun ShayariAndQuotes(navHostController: NavHostController?) {
             }
         }
 
+        Text(
+            text = "Privacy Policy",
+            style = MaterialTheme.typography.labelLarge,
+            color = InkMuted,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .pressClick { navHostController?.navigate(ShayariRoutingItems.privacyScreen.route) }
+                .padding(top = 18.dp, bottom = 6.dp, start = 16.dp, end = 16.dp)
+        )
+
         Spacer(
             Modifier
                 .navigationBarsPadding()

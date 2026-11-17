@@ -3,14 +3,20 @@ package com.shayarishaala.shayarishaala.ui.kalam
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.ai.client.generativeai.type.PromptBlockedException
+import com.google.ai.client.generativeai.type.QuotaExceededException
+import com.google.ai.client.generativeai.type.RequestTimeoutException
+import com.google.ai.client.generativeai.type.ResponseStoppedException
+import com.google.ai.client.generativeai.type.UnsupportedUserLocationException
 import com.shayarishaala.shayarishaala.data.repository.KalamRepository
 import com.shayarishaala.shayarishaala.utils.PreferenceManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.net.SocketTimeoutException
-import java.net.UnknownHostException
+import java.nio.channels.UnresolvedAddressException
 
 data class KalamUiState(
     val isLoading: Boolean = false,
@@ -18,17 +24,28 @@ data class KalamUiState(
     val error: String? = null,
     val userPrompt: String = "",
     val isFavorite: Boolean = false,
-    val generationCount: Int = 0
+    val generationCount: Int = 0,
+    val showConsent: Boolean = false,
+    val reportSent: Boolean = false
 )
 
-data class ShayariEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id : Int,
-    val textShayri : String,
-//    val prompt : String,
-    val createdAt : System.currentTimeMillis(),
-    val isFavorite : Boolean = false
-)
+/** A friendly Hindi message for a failed generation; raw API errors never reach the user. */
+internal fun kalamErrorMessage(error: Throwable): String {
+    val chain = generateSequence(error) { it.cause }.take(8).toList()
+    return when {
+        chain.any { it is SocketTimeoutException || it is RequestTimeoutException } ->
+            "समय ज़्यादा लग गया, दोबारा कोशिश करें"
+        chain.any { it is IOException || it is UnresolvedAddressException } ->
+            "इंटरनेट कनेक्शन जाँचें और दोबारा कोशिश करें"
+        chain.any { it is PromptBlockedException || it is ResponseStoppedException } ->
+            "इस विषय पर शायरी नहीं लिखी जा सकती, कोई और विषय आज़माएँ"
+        chain.any { it is UnsupportedUserLocationException } ->
+            "Kalam AI आपके क्षेत्र में उपलब्ध नहीं है"
+        chain.any { it is QuotaExceededException } ->
+            "कलम अभी आराम कर रही है, थोड़ी देर बाद कोशिश करें"
+        else -> "कलम अभी नहीं लिख पा रही, थोड़ी देर बाद कोशिश करें"
+    }
+}
 
 class KalamViewModel(
     private val repository: KalamRepository,
@@ -57,31 +74,35 @@ class KalamViewModel(
     }
 
     fun generateShayari() {
+        // A second tap must never start a second paid request
+        if (_state.value.isLoading) return
+
         val prompt = _state.value.userPrompt.trim()
 
         if (prompt.isEmpty()) {
-            _state.value = _state.value.copy(error = "Please enter a prompt")
+            _state.value = _state.value.copy(error = "कोई विषय लिखिए")
             return
         }
 
         if (!preferenceManager.canGenerateShayari()) {
             _state.value = _state.value.copy(
-                error = "You've reached today's limit (5 generations/day)"
+                error = "आज की सीमा (5 शायरी) पूरी हो गई"
             )
             return
         }
 
-        _state.value = _state.value.copy(isLoading = true, error = null, shayari = "")
+        if (!preferenceManager.hasAiConsent()) {
+            _state.value = _state.value.copy(showConsent = true)
+            return
+        }
+
+        _state.value = _state.value.copy(isLoading = true, error = null, shayari = "", reportSent = false)
 
         viewModelScope.launch {
             try {
-                Log.d(TAG, "Generating shayari with prompt: $prompt")
-
                 val result = repository.generateShayari(prompt)
 
                 result.onSuccess { generatedShayari ->
-                    Log.d(TAG, "Success: Generated shayari: $generatedShayari")
-
                     preferenceManager.incrementGenerationCount()
                     updateGenerationCount()
 
@@ -92,42 +113,21 @@ class KalamViewModel(
                         isFavorite = preferenceManager.isFavorite(generatedShayari)
                     )
                 }.onFailure { exception ->
-                    Log.e(TAG, "Failure: ${exception::class.simpleName} - ${exception.message}", exception)
-
-                    val errorMessage = when (exception) {
-                        is IllegalArgumentException -> "Invalid input"
-                        is UnknownHostException -> "Check your internet connection"
-                        is SocketTimeoutException -> "Request timed out, try again"
-                        else -> {
-                            val msg = exception.message ?: ""
-                            when {
-                                msg.contains("MAX_TOKENS", ignoreCase = true) -> "Response too long. Try a shorter prompt"
-                                msg.contains("404", ignoreCase = true) -> "Model not available. Check API configuration"
-                                msg.contains("gemini-pro is not found", ignoreCase = true) -> "⚠️ Model not available. Using gemini-1.5-flash"
-                                msg.contains("Empty response", ignoreCase = true) -> "Try a different prompt"
-                                msg.contains("429", ignoreCase = true) -> "Rate limited, try later"
-                                msg.contains("401", ignoreCase = true) -> "Authentication failed - Check API key"
-                                msg.contains("Network", ignoreCase = true) -> "Check your internet connection"
-                                msg.contains("Unable to resolve host", ignoreCase = true) -> "Check your internet connection"
-                                msg.contains("timeout", ignoreCase = true) -> "Request timed out"
-                                msg.contains("Unexpected Response", ignoreCase = true) -> "API Error: ${msg.take(100)}"
-                                else -> "API Error: ${msg.take(150)}"
-                            }
-                        }
-                    }
+                    // Class name only: messages can carry prompt text or request details
+                    Log.e(TAG, "Failure: ${exception::class.simpleName}")
 
                     _state.value = _state.value.copy(
                         isLoading = false,
-                        error = errorMessage,
+                        error = kalamErrorMessage(exception),
                         shayari = ""
                     )
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Unexpected error: ${e.message}", e)
+                Log.e(TAG, "Unexpected error: ${e::class.simpleName}")
 
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    error = "Something went wrong 😔"
+                    error = "कुछ गड़बड़ हो गई 😔"
                 )
             }
         }
@@ -137,6 +137,24 @@ class KalamViewModel(
         if (_state.value.userPrompt.isNotEmpty()) {
             generateShayari()
         }
+    }
+
+    fun acceptConsent() {
+        preferenceManager.setAiConsent(true)
+        _state.value = _state.value.copy(showConsent = false)
+        generateShayari()
+    }
+
+    fun declineConsent() {
+        _state.value = _state.value.copy(showConsent = false)
+    }
+
+    /** Sends the report and removes the shayari from the screen. */
+    fun reportShayari(reason: String) {
+        val currentShayari = _state.value.shayari
+        if (currentShayari.isEmpty()) return
+        repository.reportShayari(currentShayari, reason)
+        _state.value = _state.value.copy(shayari = "", isFavorite = false, reportSent = true)
     }
 
     fun toggleFavorite() {

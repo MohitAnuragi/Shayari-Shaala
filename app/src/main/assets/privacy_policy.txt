@@ -1,0 +1,38 @@
+Effective date: 31 October 2026
+
+This privacy policy explains how the Shayari Shaala Android app ("the app") handles your data. The app is developed by Mohit Anuragi.
+
+## Summary
+There is no account or sign-in. The app shows no ads, does not use your location, and does not sell your data. Your favourites stay on your phone. Data leaves your phone only when you use Kalam AI, when you report a shayari, or when crash reports are sent.
+
+## Data that leaves your phone
+Kalam AI text. When you tap the generate button, the topic you typed is sent over an encrypted connection to the Google Gemini API, and Google returns the shayari. This happens only after you accept the notice shown in the app. Do not type names, phone numbers or other personal information. Google processes this data under the Gemini API terms for paid services: it does not use these prompts or responses to improve its products, and it logs them for a limited period to detect violations of its policies. The developer does not receive or store your prompts.
+
+Crash reports. Google Firebase Crashlytics sends technical data so that crashes can be fixed: crash time, stack traces and error messages, app version, Android version, device model, processor type, memory and disk space, whether the device is rooted, and random identifiers for the app installation and session (including the Firebase installation ID). You can turn this off under "Crash reports" on the Privacy Policy screen. The change takes effect the next time the app is opened.
+
+Reports. If you report a Kalam AI shayari, the text of that shayari and the reason you chose are sent to the developer through Firebase Crashlytics, together with the crash report data above. Your prompt is not included. Sending a report turns crash reports on if they were off.
+
+## Data that stays on your phone
+Saved favourites, the daily Kalam AI counter and your privacy choices are stored only in the app's private storage. Images you save from Studio go to your phone's gallery. Images you share are kept briefly in the app's temporary storage. If Android backup is on for your Google account, Android may include the app's favourites and settings in your own device backup.
+
+## How data is shared
+Data is shared only with the service providers above (Google Gemini API and Google Firebase) for the purposes described in this policy. The developer does not sell your data or use it for advertising. When you share a shayari or image, it goes to the app you choose, and that app's own policy applies.
+
+## Security
+Data sent by the app travels over encrypted HTTPS connections. Data on your phone is kept in the app's private storage, which other apps cannot read.
+
+## How long data is kept
+Crash data and reports are kept for 90 days, then removed by Firebase. Kalam AI prompts and responses are kept by Google only for the limited period described in its terms. The developer keeps no other copies, except a report that is needed to improve content filtering.
+
+## Deleting your data
+To delete data on your phone, clear the app's storage in Android settings or uninstall the app. To stop crash reports, use the switch on the Privacy Policy screen. To withdraw your Kalam AI consent, use the Kalam AI switch on the same screen. To ask about or delete crash or report data, email the address below. Please include the date and your device model, because the app has no account linked to you.
+
+## Age requirement
+The app is intended for adults aged 18 and over. Google requires people using Gemini API features to be at least 18. The app is not directed at children, and the developer does not knowingly collect children's data. If you believe a child has used the app, contact us so that any related data can be deleted.
+
+## Changes to this policy
+If this policy changes, the updated version will appear in the app and at the same web address, with a new effective date.
+
+## Contact
+Mohit Anuragi
+Email: anuragimohit468@gmail.com

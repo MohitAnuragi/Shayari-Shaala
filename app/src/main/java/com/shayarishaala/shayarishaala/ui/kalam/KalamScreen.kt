@@ -39,12 +39,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -60,6 +63,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -97,7 +101,9 @@ import com.shayarishaala.shayarishaala.utils.ShareUtils
 import kotlinx.coroutines.delay
 
 private const val DAILY_LIMIT = 5
+private const val MAX_PROMPT_LENGTH = 300
 private val QUICK_TOPICS = listOf("इश्क़", "दोस्ती", "बारिश", "माँ", "जुदाई", "हौसला")
+private val REPORT_REASONS = listOf("अपमानजनक", "अश्लील", "हिंसा या नुकसान", "कुछ और")
 
 @Composable
 fun KalamScreen(navHostController: NavHostController) {
@@ -140,8 +146,20 @@ fun KalamScreen(navHostController: NavHostController) {
         onClearError = { viewModel.clearError() },
         onOpenStudio = {
             navHostController.navigate(ShayariRoutingItems.studioScreen.withArg(state.shayari))
-        }
+        },
+        onReport = { viewModel.reportShayari(it) }
     )
+
+    if (state.showConsent) {
+        KalamConsentDialog(
+            onAccept = { viewModel.acceptConsent() },
+            onDecline = { viewModel.declineConsent() },
+            onOpenPolicy = {
+                viewModel.declineConsent()
+                navHostController.navigate(ShayariRoutingItems.privacyScreen.route)
+            }
+        )
+    }
 }
 
 @Composable
@@ -155,15 +173,17 @@ fun KalamScreenContent(
     onFavoriteToggle: () -> Unit,
     onBackClick: () -> Unit,
     onClearError: () -> Unit,
-    onOpenStudio: () -> Unit
+    onOpenStudio: () -> Unit,
+    onReport: (String) -> Unit
 ) {
     val limitReached = state.generationCount >= DAILY_LIMIT
+    val focusManager = LocalFocusManager.current
 
     fun editPrompt(text: String) {
         // The prompt is locked while Kalam is writing
         if (state.isLoading) return
         if (state.error != null) onClearError()
-        onPromptChanged(text)
+        onPromptChanged(text.take(MAX_PROMPT_LENGTH))
     }
 
     Column(
@@ -254,7 +274,11 @@ fun KalamScreenContent(
             PillButton(
                 text = if (limitReached) "आज की सीमा पूरी" else "शायरी लिखो",
                 icon = Icons.Outlined.AutoAwesome,
-                onClick = onGenerateClick,
+                onClick = {
+                    // The keyboard would otherwise cover the shayari when it appears
+                    focusManager.clearFocus()
+                    onGenerateClick()
+                },
                 enabled = !state.isLoading && !limitReached,
                 loading = state.isLoading,
                 modifier = Modifier.fillMaxWidth()
@@ -287,11 +311,98 @@ fun KalamScreenContent(
                     onFavoriteToggle = onFavoriteToggle,
                     onRegenerate = onRegenerate,
                     onOpenStudio = onOpenStudio,
-                    onShareClick = onShareClick
+                    onShareClick = onShareClick,
+                    onReport = onReport
+                )
+            }
+
+            AnimatedVisibility(visible = state.reportSent) {
+                Text(
+                    "रिपोर्ट मिल गई, धन्यवाद। यह शायरी हटा दी गई है।",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = InkMuted
                 )
             }
         }
     }
+}
+
+/** Play policy: disclosure and an affirmative choice before any text leaves the device. */
+@Composable
+private fun KalamConsentDialog(
+    onAccept: () -> Unit,
+    onDecline: () -> Unit,
+    onOpenPolicy: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDecline,
+        containerColor = PaperCard,
+        title = { Text("Kalam AI इस्तेमाल करने से पहले", style = MaterialTheme.typography.titleLarge, color = Ink) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "आपका लिखा विषय शायरी बनाने के लिए Google Gemini को भेजा जाएगा। " +
+                        "इसमें नाम, फ़ोन नंबर या कोई निजी जानकारी न लिखें।",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Ink
+                )
+                Text(
+                    "Kalam AI सिर्फ़ 18 साल या उससे बड़े लोगों के लिए है।",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Ink
+                )
+                Text(
+                    "Privacy Policy पढ़ें",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Sindoor,
+                    modifier = Modifier
+                        .pressClick(onClick = onOpenPolicy)
+                        .padding(vertical = 8.dp)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onAccept) { Text("मैं सहमत हूँ", color = Sindoor) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDecline) { Text("अभी नहीं", color = Ink) }
+        }
+    )
+}
+
+/** Play policy: offensive AI output can be reported without leaving the app. */
+@Composable
+private fun KalamReportDialog(onReport: (String) -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = PaperCard,
+        title = { Text("शायरी रिपोर्ट करें", style = MaterialTheme.typography.titleLarge, color = Ink) },
+        text = {
+            Column {
+                Text(
+                    "सिर्फ़ यह शायरी और चुना हुआ कारण डेवलपर को भेजा जाएगा। " +
+                        "क्रैश रिपोर्ट बंद हों तो वे चालू हो जाएँगी; Privacy Policy में बदल सकते हैं।",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Ink
+                )
+                Spacer(Modifier.height(8.dp))
+                REPORT_REASONS.forEach { reason ->
+                    Text(
+                        reason,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Ink,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .pressClick(onClickLabel = "Report as $reason") { onReport(reason) }
+                            .padding(vertical = 12.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("रद्द करें", color = Ink) }
+        }
+    )
 }
 
 /** Five dots, one per daily generation; used dots fill in with a spring. */
@@ -421,7 +532,19 @@ private fun ResultSection(
     onRegenerate: () -> Unit,
     onOpenStudio: () -> Unit,
     onShareClick: () -> Unit,
+    onReport: (String) -> Unit,
 ) {
+    var showReport by remember { mutableStateOf(false) }
+    if (showReport) {
+        KalamReportDialog(
+            onReport = {
+                showReport = false
+                onReport(it)
+            },
+            onDismiss = { showReport = false }
+        )
+    }
+
     val words = remember(shayari) { shayari.split(" ") }
     var revealedFor by rememberSaveable { mutableStateOf("") }
     var visibleWords by remember(shayari) {
@@ -462,5 +585,16 @@ private fun ResultSection(
             onClick = onShareClick,
             modifier = Modifier.fillMaxWidth()
         )
+        Row(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .pressClick(onClickLabel = "Report this shayari") { showReport = true }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(Icons.Outlined.Flag, contentDescription = null, tint = InkMuted, modifier = Modifier.size(18.dp))
+            Text("रिपोर्ट करें", style = MaterialTheme.typography.labelLarge, color = InkMuted)
+        }
     }
 }

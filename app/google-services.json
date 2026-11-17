@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "503124192348",
+    "project_id": "shayari-shaala",
+    "storage_bucket": "shayari-shaala.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:503124192348:android:ca85f08564b0a389ef4a99",
+        "android_client_info": {
+          "package_name": "com.shayarishaala.shayarishaala"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbyV7e4ndC-WsTLgP7v635lKWbqYpjJtc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

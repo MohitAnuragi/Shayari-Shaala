@@ -1,15 +1,14 @@
 package com.shayarishaala.shayarishaala.data.repository
 
-import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.shayarishaala.shayarishaala.data.remote.GeminiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class KalamRepository(private val geminiService: GeminiService) {
+/** Appears in Crashlytics as a non-fatal issue, so offensive output reaches the developer. */
+private class ReportedKalamShayari(message: String) : Exception(message)
 
-    companion object {
-        private const val TAG = "KalamRepository"
-    }
+class KalamRepository(private val geminiService: GeminiService) {
 
     suspend fun generateShayari(prompt: String): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -18,6 +17,13 @@ class KalamRepository(private val geminiService: GeminiService) {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    /** Sends only the AI text and the reason; the user's prompt is never included. */
+    fun reportShayari(shayari: String, reason: String) {
+        val crashlytics = FirebaseCrashlytics.getInstance()
+        crashlytics.setCrashlyticsCollectionEnabled(true)
+        crashlytics.recordException(ReportedKalamShayari("$reason: $shayari"))
     }
 }
 

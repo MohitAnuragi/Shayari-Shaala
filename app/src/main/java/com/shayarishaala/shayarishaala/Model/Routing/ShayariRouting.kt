@@ -48,6 +48,7 @@ import com.shayarishaala.shayarishaala.ui.components.BottomTab
 import com.shayarishaala.shayarishaala.ui.components.LocalNavAnimatedScope
 import com.shayarishaala.shayarishaala.ui.components.LocalSharedTransitionScope
 import com.shayarishaala.shayarishaala.ui.kalam.KalamScreen
+import com.shayarishaala.shayarishaala.ui.privacy.PrivacyScreen
 import com.shayarishaala.shayarishaala.ui.studio.ShayariStudioScreen
 import com.shayarishaala.shayarishaala.ui.theme.Motion
 import com.shayarishaala.shayarishaala.ui.theme.Paper
@@ -222,6 +223,9 @@ fun ShayariRouting(navHostController: NavHostController) {
                     }
                     screen(ShayariRoutingItems.favoritesScreen.route) {
                         FavoritesScreen(navHostController)
+                    }
+                    screen(ShayariRoutingItems.privacyScreen.route) {
+                        PrivacyScreen(navHostController)
                     }
                     screen(ShayariRoutingItems.studioScreen.route + "/{shayariText}") {
                         val text = it.arguments?.getString("shayariText") ?: ""
